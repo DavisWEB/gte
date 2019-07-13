@@ -25,13 +25,13 @@ router.get("/reg",(req,res)=>{
 //用户登录
 router.get("/login",(req,res)=>{
 	var obj=req.query;
-	var sql="SELECT uid,vip form user WHERE uphone=? AND upwd=?";
+	var sql="SELECT uid,vip from user WHERE uphone=? AND upwd=?";
 	pool.query(sql,[obj.uphone,obj.upwd],(err,result)=>{
 		if(err) throw err;
 		if(result.length>0){
-			req.session.uid=result[0];
-			req.session.vip=result[1];
+			req.session.data=result[0];
 			res.send({code:200,msg:"success"})
+			console.log(req.session.data);
 		}else{
 			res.send({code:-200,msg:"fail"})
 		}
@@ -75,7 +75,7 @@ router.get("/user",(req,res)=>{
 	};
 	//如果数据包含金钱,则修改金钱
 	if(obj.cash){
-		var sql="SELECT cash,points FORM user WHERE uid=?";
+		var sql="SELECT cash,points from user WHERE uid=?";
 		pool.query(sql,[uid],(err,result)=>{
 			if(err) throw err;
 			if(result.length>0){
@@ -102,12 +102,15 @@ router.get("/bvip",(req,res)=>{
 	var uid=req.session.uid;
 	var vip=req.session.vip;
 	var bvw=req.query.bvw;
-	if(!req.session.uid) return;
+	if(!req.session.uid){
+		res.send({code:-200,msg:"please login"})
+		return
+	};
 	if(vip==2){
 		res.send({code:-200,msg:"you are vip2 now"});
 		return;
 	}
-	var sql="SELECT cash form user WHERE uid=?"
+	var sql="SELECT cash from user WHERE uid=?"
 	pool.query(sql,[uid],(err,result)=>{
 		if(err) throw err
 		if(result.length>0){
@@ -131,10 +134,35 @@ router.get("/bvip",(req,res)=>{
 			res.send({code:-200,msg:"fail to search"})
 		}
 	})
+})
 
-
+//订单接口--请求订单与订单状态
+router.get("/order",(req,res)=>{
+	var uid=req.session.data.uid;
+	if(!uid){
+		res.send({code:-200,msg:"please login"})
+		return;
+	}
+	var sql="SELECT odnumber,status from order_status WHERE userid=?"
+	pool.query(sql,[uid],(err,result)=>{
+		if(err) throw err;
+		if(result.length>0){
+			var odnumber=result[0].odnumber
+			var status=result[0].status;
+			 sql="SELECT foodname,price,qty,odnumber from ubag WHERE userid=?"
+			pool.query(sql,[uid],(err,result)=>{
+				if(err) throw err;
+				if(result.length>0){
+					res.send({code:200,msg:"succes",data:result})
+				}else{res.send({code:-200,msg:"no data"})}
+			})
+		
+		}else{
+			res.send({code:-200,msg:"no data to request"})
+		}
+	})
+})
 	
 
-})
 
 module.exports=router;
