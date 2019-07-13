@@ -99,10 +99,10 @@ router.get("/user",(req,res)=>{
 })
 	//成为会员
 router.get("/bvip",(req,res)=>{
-	var uid=req.session.uid;
-	var vip=req.session.vip;
+	var uid=req.session.data.uid;
+	var vip=req.session.data.vip;
 	var bvw=req.query.bvw;
-	if(!req.session.uid){
+	if(!uid){
 		res.send({code:-200,msg:"please login"})
 		return
 	};
